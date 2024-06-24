@@ -2,6 +2,11 @@
 
 <img width="905" alt="image" src="https://github.com/markteehan/file-chunk-connectors/blob/main/docs/assets/Flow_20230417.png">
 
+## _New_ -  version 2.5 (24-June-2024)
+New source connector configuration properties "finished.file.retention.mins" and "error.file.retention.mins" which automate cleanup of uploaded files after the number of minutes specified
+
+New Source & Sink Connector configuration properties "topic.partitions" to inform the connectors of the partition count to distribute messages to. This configuration property should be set to the partition count of the topic, and it should be set for both the source and the sink connector.
+
 
 ## _New_ -  version 2.4 (03-May-2024)
 New Source Connector configuration property "files.dir" (deprecates properties "input.path:, "error.path" and "finished.path")
@@ -47,8 +52,8 @@ confluent local services start
 
 ```
 {
-                                   "name": "file-chunk-uploader-job" ,
-                                 "config": {
+                                   "name": "uploader" ,
+"config":{
                                   "topic": "file-chunk-topic"
 ,                       "connector.class": "com.github.markteehan.file.chunk.source.ChunkSourceConnector"
 ,                             "files.dir": "/tmp/upload"
@@ -59,33 +64,30 @@ confluent local services start
 , "cleanup.policy.maintain.relative.path": "true"
 ,          "input.path.walk.recursively" : "true"
 ,          "finished.file.retention.mins": "60"
-,                       "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
-,                         "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
-,          "key.converter.schemas.enable": "false"
-,        "value.converter.schemas.enable": "false"
+,                      "topic.partitions": "1"
 }}
+
 ```
 
 ### Create downloader.json
 
 ```
 {
-                                   "name": "file-chunk-downloader-job"
-,                                "config": {
-                                 "topics": "file-chunk-topic"
-,                       "connector.class": "com.github.markteehan.file.chunk.sink.ChunkSinkConnector"
-,                             "tasks.max": "1"
+                                   "name": "downloader" ,
+                                "config" : {
+                                  "topic": "file-chunk-topic"
+,                       "connector.class": "com.github.markteehan.file.chunk.source.ChunkSourceConnector"
 ,                             "files.dir": "/tmp/download"
-,                 "auto.register.schemas": "false"
-,                         "schema.ignore": "true"
-,             "schema.generation.enabled": "false"
-,                  "schema.compatibility": "NONE"
-,                       "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
-,                         "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
-,          "key.converter.schemas.enable": "false"
-,        "value.converter.schemas.enable": "false"
-
+,                    "input.file.pattern": ".*"
+,                             "tasks.max": "1"
+,                  "file.minimum.age.ms" : "5000"
+,              "binary.chunk.size.bytes" : "300000"
+, "cleanup.policy.maintain.relative.path": "true"
+,          "input.path.walk.recursively" : "true"
+,                      "topic.partitions": "1"
 }}
+
+
 ```
 
 
@@ -210,15 +212,13 @@ Set "halt.on.error=true" so that connector tasks will halt if an error is encoun
 
 
 ## Packaging
-The connectors are available packaged as three options:
+The connectors are available packaged on Confluent Hub
  - Kafka Connect Plugins on Confluent Hub (skinny jars with dependencies) [source](https://www.confluent.io/hub/markteehan/file-chunk-source) & [sink](https://www.confluent.io/hub/markteehan/file-chunk-sink)
- - Kafka Connect Plugins [plugins](https://github.com/markteehan/file-chunk-connectors) (Uber jars)
- - Complete [tarballs](https://github.com/markteehan/file-chunk-tarballs) that include Kafka, Java, the connectors and setup scripts) enabling low-friction single-machine deployment on windows or linux. Use the Plugins on a Kafka Connect server, alongside other connector jobs and tasks. Use the tarball for one-key install on laptop/desktop linux or windows machines.
-
+ 
 
 ## Contacts
-On technical matters, please provide feedback or questions by raising an issue against this [github repo](https://github.com/markteehan/file-chunk-connectors/issues)
-For more specific questions (Consulting, usage scenarios etc) please email Mark Teehan (teehan@gmail.com)
+On technical matters, please provide feedback or questions by raising an issue against this [github repo](https://github.com/streamsend-io/file-chunk-connectors/issues)
+For more specific questions (Consulting, usage scenarios etc) please email Mark Teehan (markteehan@streamsend.io)
 
 
 ## Installation
@@ -226,18 +226,10 @@ For more specific questions (Consulting, usage scenarios etc) please email Mark 
 You can install this connector by manually downloading the ZIP files from Confluent Hub.
 They can be installed manually by unpacking the zipfiles into the share/confluent-hub-components (or similar). The zipfiles must be unpacked.
 
-#### Prerequisites
-Note You must install the connector on every machine where Connect will run.  
-_Install the connector manually_
-Download the jarfiles for the Source & Sink connectors and then follow the manual connector installation instructions.
-#### Manually
-Copy the jarfiles for the source and sink connectors to your kafka connect plugins directory and restart Kafka Connect.
-Alternatively, download the jar-with-dependencies from github and copy them to the plugins directory.
+If you have Confluent Client (or server) installed, then use the "confluent" command line utility:
+confluent hub install markteehan/file-chunk-source:latest
+confluent hub install markteehan/file-chunk-sink:latest
 
-```
-curl -O -L https://raw.githubusercontent.com/markteehan/file-chunk-connectors/main/plugins/file-chunk-sink-2.4-jar-with-dependencies.jar
-curl -O -L https://raw.githubusercontent.com/markteehan/file-chunk-connectors/main/plugins/file-chunk-source-2.4-jar-with-dependencies.jar
-```
 
 ## Security (Authentication and Data Encryption)
 Files are re-assembled at the sink connector as-is: the streamed files in the sink-connector "merged" directory are identical to the files in the source-connector files.dir directory.
@@ -276,7 +268,7 @@ These limitations are in place for the current release:
 
 
 ## License
-There is no license restriction for single-task usage. Please contact Mark Teehan (teehan@gmail.com) for deployment of multi-task pipelines.
+There is no license restriction for single-task usage. Please contact Mark Teehan (markteehan@streamsend.io) for deployment of multi-task pipelines.
 There is no limit on the number of single-task source/sink connectors or jobs deployed.
 _Single task_ means that one Kafka Connect task produces events to a topic for each source connector, and one Kafka Connect task consumes events for each sink connector.
 These plugins support single-task usage only: a _max.tasks_ > 1 is downgraded to 1 during startup.
@@ -284,7 +276,7 @@ Single Task throughput can be tuned by modifying the binary.chunk.size.bytes.
 
 ## Support
 Raise an issue explaining the problem and the desired behaviour.
-For consultation on feature enhancements please contact Mark Teehan (teehan@gmail.com).
+For consultation on feature enhancements please contact Mark Teehan (markteehan@streamsend.io).
 
 
 # Troubleshooting
@@ -408,6 +400,34 @@ Stop all tasks if an error is encountered while processing input files.
 - *Default:* true
 
 
+##### `topic.partitions`
+
+The partition count of the topic specified by "topic". The file-chunk connectors can operate in single-task mode or multi-task mode. This property is needed for efficient operation in multi-task mode. If operating in single-task mode (which is the default mode) then this property is ignored. In multi-task mode, the source connector sets message keys to a range of distinct values that matches the value of "topic.partitions" to improve distribution of data to multiple partitions, while maintaining ordering for consumers.
+
+- *Importance:* HIGH
+- *Type:* STRING
+- - *Default:* 1
+
+
+##### `finished.file.retention.mins`
+
+Then number of minutes to retain a file in the input.file directory after it has been uploaded successfully. Set to -1 to disable deletion.
+
+- *Importance:* HIGH
+- *Type:* INTEGER
+- - *Default:* 60
+
+
+##### `error.file.retention.mins`
+
+Then number of minutes to retain a file in the input.file directory after it has been uploaded unsuccessfully. Set to -1 to disable deletion.
+
+- *Importance:* HIGH
+- *Type:* INTEGER
+- - *Default:* -1
+
+
+
 ## Sink Connector configuration properties
 
 ##### `files.dir`
@@ -435,3 +455,12 @@ Stop all tasks if an error is encountered while processing file merges
 - *Importance:* HIGH
 - *Type:* BOOLEAN
 - *Default:* true
+
+##### `topic.partitions`
+
+The partition count of the topic specified by "topic". The file-chunk connectors can operate in single-task mode or multi-task mode. This property is needed for efficient operation in multi-task mode. If operating in single-task mode (which is the default mode) then this property is ignored. In multi-task mode, this property should be set to the same value as the "topic.partitions" property set for the source connector.
+
+- *Importance:* HIGH
+- *Type:* STRING
+- - *Default:* 1
+
