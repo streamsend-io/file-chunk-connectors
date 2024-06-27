@@ -3,6 +3,8 @@
 <img width="905" alt="image" src="https://github.com/markteehan/file-chunk-connectors/blob/main/docs/assets/Flow_20230417.png">
 
 ## _New_ -  version 2.5 (24-June-2024)
+Demo Video https://www.youtube.com/channel/UC8GQcsDExU1tgMUAjALUUSg
+Plugin packaging has changed to "streamsend": this changes the "connector.class"
 New source connector configuration properties "finished.file.retention.mins" and "error.file.retention.mins" which automate cleanup of uploaded files after the number of minutes specified
 
 New Source & Sink Connector configuration properties "topic.partitions" to inform the connectors of the partition count to distribute messages to. This configuration property should be set to the partition count of the topic, and it should be set for both the source and the sink connector.
@@ -52,18 +54,18 @@ confluent local services start
 
 ```
 {
-                                   "name": "uploader" ,
-"config":{
+                                   "name": "uploader"
+,"config":{
                                   "topic": "file-chunk-topic"
-,                       "connector.class": "com.github.markteehan.file.chunk.source.ChunkSourceConnector"
-,                             "files.dir": "/tmp/upload"
+,                       "connector.class": "com.github.streamsend.file.chunk.source.ChunkSourceConnector"
+ ,                            "files.dir": "/tmp/upload"
 ,                    "input.file.pattern": ".*"
 ,                             "tasks.max": "1"
-,                  "file.minimum.age.ms" : "5000"
-,              "binary.chunk.size.bytes" : "1000000"
+,                  "file.minimum.age.ms" : "2000"
+,              "binary.chunk.size.bytes" : "300000"
 , "cleanup.policy.maintain.relative.path": "true"
 ,          "input.path.walk.recursively" : "true"
-,          "finished.file.retention.mins": "60"
+,          "finished.file.retention.mins": "10"
 ,                      "topic.partitions": "1"
 }}
 
@@ -73,18 +75,20 @@ confluent local services start
 
 ```
 {
-                                   "name": "downloader" ,
-                                "config" : {
-                                  "topic": "file-chunk-topic"
-,                       "connector.class": "com.github.markteehan.file.chunk.source.ChunkSourceConnector"
-,                             "files.dir": "/tmp/download"
-,                    "input.file.pattern": ".*"
-,                             "tasks.max": "1"
-,                  "file.minimum.age.ms" : "5000"
-,              "binary.chunk.size.bytes" : "300000"
-, "cleanup.policy.maintain.relative.path": "true"
-,          "input.path.walk.recursively" : "true"
-,                      "topic.partitions": "1"
+                           "name": "downloader"
+,"config":{
+                         "topics": "file-chunk-topic"
+,               "connector.class": "com.github.streamsend.file.chunk.sink.ChunkSinkConnector"
+,                     "tasks.max": "1"
+,                     "files.dir": "/tmp/download"
+,      "binary.chunk.size.bytes" : "300000"
+,         "auto.register.schemas": "false"
+,                 "schema.ignore": "true"
+,     "schema.generation.enabled": "false"
+,"  key.converter.schemas.enable": "false"
+,"value.converter.schemas.enable": "false"
+,          "schema.compatibility": "NONE"
+,              "topic.partitions": "1"
 }}
 
 
