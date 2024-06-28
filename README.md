@@ -3,7 +3,7 @@
 <img width="905" alt="image" src="https://github.com/markteehan/file-chunk-connectors/blob/main/docs/assets/Flow_20230417.png">
 
 ## _New_ -  version 2.5 (24-June-2024)
-Demo Video https://www.youtube.com/channel/UC8GQcsDExU1tgMUAjALUUSg
+Demo Video https://www.youtube.com/@Streamsend-dp4cg/videos
 Plugin packaging has changed to "streamsend": this changes the "connector.class"
 New source connector configuration properties "finished.file.retention.mins" and "error.file.retention.mins" which automate cleanup of uploaded files after the number of minutes specified
 
