@@ -4,10 +4,13 @@
 
 ## _New_ -  version 2.5 (24-June-2024)
 Demo Video https://www.youtube.com/@Streamsend-dp4cg/videos
+
 Plugin packaging has changed to "streamsend": this changes the "connector.class"
+
 New source connector configuration properties "finished.file.retention.mins" and "error.file.retention.mins" which automate cleanup of uploaded files after the number of minutes specified
 
-New Source & Sink Connector configuration properties "topic.partitions" to inform the connectors of the partition count to distribute messages to. This configuration property should be set to the partition count of the topic, and it should be set for both the source and the sink connector.
+New Source & Sink Connector configuration properties "topic.partitions" to inform the connectors of the partition count to distribute messages to. 
+This configuration property should be set to the partition count of the topic, and it should be set for both the source and the sink connector.
 
 
 ## _New_ -  version 2.4 (03-May-2024)
